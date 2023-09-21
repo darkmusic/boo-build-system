@@ -1,0 +1,125 @@
+[tasks.default]
+alias = "build-all"
+
+[tasks.clean-all]
+dependencies = ["remove-build-dir", "build-all"]
+
+[tasks.build-all]
+dependencies = ["init-build-dir", "build-bake", "build-examples", "build-tests"]
+script_runner = "pwsh"
+script_extension = "ps1"
+script = '''
+Copy-Item -Path ..\output\*.dll ..\bin
+Copy-Item -Path ..\output\*.pdb ..\bin
+Copy-Item -Path ..\output\*.exe ..\bin
+'''
+
+[tasks.remove-build-dir]
+script_runner = "pwsh"
+script_extension = "ps1"
+script = '''
+If (Test-Path -Path "..\output") {
+  Remove-Item -Recurse -Force ..\output
+}
+'''
+
+[tasks.init-build-dir]
+script_runner = "pwsh"
+script_extension = "ps1"
+script = '''
+If ((Test-Path -Path "..\output") -eq $false) {
+  New-Item -Path ..\output -ItemType "directory"
+}
+Copy-Item -Path ..\lib\*.dll -Destination ..\output
+'''
+
+[tasks.build-bake]
+dependencies = ["build-engine", "build-extensions", "build-win32-helper"]
+command = "../lib/booc"
+args = [
+  "-o:../output/Bake.exe", 
+  "../tools/bake/Program.boo", 
+  "../tools/bake/BakeCommandLine.boo", 
+  "-reference:../output/Bake.Engine.dll,../lib/boo.lang.useful.dll"]
+
+[tasks.build-engine]
+command = "../lib/booc"
+args = [
+  "-o:../output/Bake.engine.dll", 
+  "../src/Bake.engine/Builder/BakeBaseScript.boo", 
+  "../src/Bake.engine/Builder/BakeEngineBuilder.boo", 
+  "../src/Bake.engine/Builder/CompileBoobsScriptException.boo", 
+  "../src/Bake.engine/Builder/LoadBakeScriptException.boo", 
+  "../src/Bake.engine/Runner/scriptLoader.boo", 
+  "../src/Bake.engine/AssemblyInfo.boo", 
+  "../src/Bake.engine/BakeEngine.boo", 
+  "../src/Bake.engine/BlockAlreadySetException.boo", 
+  "../src/Bake.engine/CircularDependencyException.boo", 
+  "../src/Bake.engine/Configuration.boo", 
+  "../src/Bake.engine/Context.boo", 
+  "../src/Bake.engine/DependencyGraphExecutor.boo", 
+  "../src/Bake.engine/DependencyNotFoundException.boo", 
+  "../src/Bake.engine/FileTask.boo", 
+  "../src/Bake.engine/RunTaskHandler.boo", 
+  "../src/Bake.engine/SvnHelper.boo", 
+  "../src/Bake.engine/SvnTask.boo", 
+  "../src/Bake.engine/TargetNotFoundException.boo", 
+  "../src/Bake.engine/Task.boo", 
+  "../src/Bake.engine/TaskBlock.boo"]
+
+[tasks.build-extensions]
+dependencies = ["build-io-extensions", "build-compiler-extensions"]
+
+[tasks.build-io-extensions]
+command = "../lib/booc"
+args = [
+  "-o:../output/Bake.io.extensions.dll", 
+  "../src/extensions/bake.io.extensions/AssemblyInfo.boo", 
+  "../src/extensions/bake.io.extensions/FileExt.boo", 
+  "../src/extensions/bake.io.extensions/FileSet.boo", 
+  "../src/extensions/bake.io.extensions/FileSetEmptyException.boo", 
+  "../src/extensions/bake.io.extensions/FileSystemHelper.boo"]
+
+[tasks.build-compiler-extensions]
+command = "../lib/booc"
+args = [
+  "-o:../output/Bake.compiler.extensions.dll", 
+  "../src/extensions/bake.compiler.extensions/AssemblyFileSet.boo", 
+  "../src/extensions/bake.compiler.extensions/AssemblyInfo.boo", 
+  "../src/extensions/bake.compiler.extensions/AssemblyLinker.boo", 
+  "../src/extensions/bake.compiler.extensions/BooCompiler.boo", 
+  "../src/extensions/bake.compiler.extensions/BuildBase.boo", 
+  "../src/extensions/bake.compiler.extensions/BuildException.boo", 
+  "../src/extensions/bake.compiler.extensions/CompilerBase.boo", 
+  "../src/extensions/bake.compiler.extensions/CSharpCompiler.boo", 
+  "../src/extensions/bake.compiler.extensions/Exec.boo", 
+  "../src/extensions/bake.compiler.extensions/MsBuild.boo", 
+  "../src/extensions/bake.compiler.extensions/ResourcesFileSet.boo", 
+  "../src/extensions/bake.compiler.extensions/TargetType.boo", 
+  "../src/extensions/bake.compiler.extensions/VbNetCompiler.boo", 
+  "-reference:../output/bake.io.extensions.dll,../lib/boo.lang.useful.dll"]
+
+[tasks.build-win32-helper]
+command = "../lib/booc"
+args = [
+  "-o:../output/Bake.win32.helper.dll", 
+  "../src/Bake.win32.helper/AssemblyInfo.boo", 
+  "../src/Bake.win32.helper/FrameworkInformation.boo"]
+
+[tasks.build-examples]
+command = "../lib/booc"
+args = [
+  "-o:../output/Bake.example.exe", 
+  "../src/Bake.example/Program.boo", 
+  "-reference:../output/Bake.engine.dll"]
+
+[tasks.build-tests]
+command = "../lib/booc"
+args = [
+  "-o:../output/Bake.tests.dll", 
+  "../src/Bake.tests/AssemblyInfo.boo", 
+  "../src/Bake.tests/BoocFixture.boo", 
+  "../src/Bake.tests/FileExtFixture.boo", 
+  "../src/Bake.tests/FileSetFixture.boo", 
+  "../src/Bake.tests/TaskFixture.boo", 
+  "-reference:../output/Bake.io.extensions.dll,../output/Bake.compiler.extensions.dll,../lib/nunit.framework.dll"]

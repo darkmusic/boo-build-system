@@ -4,3 +4,4 @@ obj
 /src/extensions/bake.compiler.extensions/bin
 /src/packages
 *.pdb
+output
